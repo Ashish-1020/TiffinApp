@@ -95,7 +95,7 @@ fun SplashScreen(
             try {
                 val response = authRepository.validateJwt("Bearer $token")
                 if (response.isSuccessful && response.body() == true) {
-                    navController.navigate("home") {
+                    navController.navigate("MainScreen") {
                         popUpTo("splash") { inclusive = true }
                     }
                 } else {
@@ -131,7 +131,7 @@ fun SplashScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "delivo™",
+                text = "Tiffin™",
                 fontSize = 36.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFFFF5722)

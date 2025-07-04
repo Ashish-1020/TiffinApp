@@ -54,11 +54,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.example.tiffinapp.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SignupScreen(viewModel: AuthViewModel = hiltViewModel()) {
+fun SignupScreen(navController: NavController, viewModel: AuthViewModel = hiltViewModel()) {
     var fullName by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -149,9 +150,3 @@ fun BackgroundPattern() {
     }
 }
 
-
-@Preview(showBackground = true)
-@Composable
-fun presigupscreen(){
-     SignupScreen()
-}

@@ -76,6 +76,7 @@ class AuthViewModel @Inject constructor(
 
                     if (loginResponse != null && loginResponse.status) {
                         tokenManager.saveToken(loginResponse.token) // Save JWT token
+                        tokenManager.saveUserId(loginResponse.id.toLong()) // Save User ID
                         _loginuiState.value = LoginUiState.Success(loginResponse.username)
                     } else {
                         _loginuiState.value = LoginUiState.Error("Invalid credentials")

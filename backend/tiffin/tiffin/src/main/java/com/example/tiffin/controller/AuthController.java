@@ -4,6 +4,7 @@ package com.example.tiffin.controller;
 import com.example.tiffin.dto.LoginRequest;
 import com.example.tiffin.model.User;
 import com.example.tiffin.repository.UserRepository;
+import com.example.tiffin.services.WalletService;
 import com.example.tiffin.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -36,6 +37,9 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private WalletService walletService;
+
     @PostMapping("/register")
     public ResponseEntity<Map<String, Object>> register(@RequestBody User user) {
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
@@ -47,6 +51,8 @@ public class AuthController {
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepository.save(user);
+
+        walletService.createWalletForUser(user);
         Map<String, Object> response = new HashMap<>();
         response.put("message", "User registered successfully.");
         response.put("status", true);

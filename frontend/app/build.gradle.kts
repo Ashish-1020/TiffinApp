@@ -71,8 +71,17 @@ dependencies {
     implementation("androidx.datastore:datastore-core:1.0.0") //
     implementation ("androidx.compose.material:material-icons-extended:1.6.1")
 
+    implementation ("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation ("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
-        implementation("androidx.compose.material3.adaptive:adaptive:1.2.0-alpha07")
+    implementation ("com.google.accompanist:accompanist-pager:0.28.0")
+
+    implementation("io.coil-kt:coil-compose:2.4.0")
+
+
+
+
+    implementation("androidx.compose.material3.adaptive:adaptive:1.2.0-alpha07")
         implementation ("androidx.compose.material3.adaptive:adaptive-layout:1.2.0-alpha07")
         implementation ("androidx.compose.material3.adaptive:adaptive-navigation:1.2.0-alpha07")
 

@@ -1,5 +1,6 @@
 package com.example.tiffinapp.core.util
 
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -12,11 +13,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.tiffinapp.core.domain.AuthRepository
 import com.example.tiffinapp.core.presentation.LoginScreen
+import com.example.tiffinapp.core.presentation.SignupScreen
 import com.example.tiffinapp.core.presentation.SplashScreen
+import com.example.tiffinapp.core.presentation.UploadScreen
+import com.example.tiffinapp.home.FoodDetailScreen
+import com.example.tiffinapp.home.MainScreen
+import com.example.tiffinapp.home.TiffinHomeScreen
 
-import com.example.tiffinapp.home.FoodHomeScreen
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NavGraph(
     navController: NavHostController,
@@ -33,7 +38,15 @@ fun NavGraph(
             )
         }
         composable("login") { LoginScreen(navController) }
-        composable("home") { FoodHomeScreen(navController) }
+        composable("MainScreen") { MainScreen(navController) }
+        composable("register") { SignupScreen(navController) }
+        composable("upload"){UploadScreen()}
+        composable("home"){TiffinHomeScreen(navController)}
+        composable("fooddetail/{mealId}") { backStackEntry ->
+            val mealId = backStackEntry.arguments?.getString("mealId") ?: ""
+            FoodDetailScreen(mealId,navController)
+        }
+
     }
 }
 

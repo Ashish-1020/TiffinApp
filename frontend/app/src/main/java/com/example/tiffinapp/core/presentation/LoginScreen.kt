@@ -2,6 +2,7 @@ package com.example.tiffinapp.core.presentation
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -68,7 +69,7 @@ fun LoginScreen(navController: NavController,viewModel: AuthViewModel = hiltView
     LaunchedEffect(uiState) {
         if (uiState is LoginUiState.Success) {
          //   delay(500) // Optional delay for showing message
-            navController.navigate("home") {
+            navController.navigate("MainScreen") {
                 popUpTo("login") { inclusive = true }
             }
         }
@@ -117,9 +118,9 @@ fun LoginScreen(navController: NavController,viewModel: AuthViewModel = hiltView
             SocialLoginRow()
 
             Spacer(modifier = Modifier.height(8.dp))
-            TextButton(onClick = {}) {
-                Text("Don't have an account? ", color = colors.outline)
-                Text("Create one", color = colors.primary)
+            Row {
+                Text("Don't have an account? ", color = colors.outline,modifier = Modifier.clickable { navController.navigate("upload")})
+                Text("Create one", color = colors.primary, modifier = Modifier.clickable { navController.navigate("register")})
             }
         }
 

@@ -32,7 +32,8 @@ public class SecurityConfig {
 
                 http.csrf(csrf->csrf.disable());
                 http.authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/register", "/login","/validateJwt").permitAll()
+                        .requestMatchers("/register", "/login","/validateJwt","/api/meals/**").permitAll()
+                        .requestMatchers("/cart/**").authenticated()
                         .anyRequest().authenticated());
                 http.sessionManagement(session ->
                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

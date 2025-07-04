@@ -41,6 +41,8 @@ import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,10 +56,20 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.tiffinapp.R
-
+/*
 @Composable
-fun FoodDetailScreen() {
+fun FoodDetailScreen(mealId:String,navController:NavController) {
+    val viewModel: HomeViewModel = hiltViewModel()
+    val meal = viewModel.meal.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.getMealbyId(mealId)
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         val scrollState = rememberScrollState()
         Column(modifier = Modifier
@@ -65,17 +77,16 @@ fun FoodDetailScreen() {
 
         // Top image with back button
         Box {
-            Image(
-                painter = painterResource(id = R.drawable.pizza), // Replace with actual burger image
-                contentDescription = null,
+            AsyncImage(
+                model = meal.value.imgurl,
+                contentDescription = meal.value.name,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(400.dp)
+                modifier = Modifier.size(400.dp)
             )
 
+
             IconButton(
-                onClick = { /* Navigate back */ },
+                onClick = {  navController.popBackStack() },
                 modifier = Modifier
                     .padding(16.dp)
                     .background(Color.White.copy(alpha = 0.9f), shape = CircleShape)
@@ -221,7 +232,163 @@ fun FoodDetailScreen() {
         }
         }
     }
+}*/
+
+
+@Composable
+fun FoodDetailScreen(mealId: String, navController: NavController) {
+    val viewModel: HomeViewModel = hiltViewModel()
+    val meal by viewModel.meal.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.getMealbyId(mealId)
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        val scrollState = rememberScrollState()
+        Column(modifier = Modifier.verticalScroll(scrollState)) {
+
+            // Top image with back button
+            Box {
+                AsyncImage(
+                    model = meal.imgurl,
+                    contentDescription = meal.name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(400.dp)
+                )
+
+                IconButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .background(Color.White.copy(alpha = 0.9f), shape = CircleShape)
+                ) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                }
+            }
+
+            Surface(
+                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                color = Color.White,
+                shadowElevation = 8.dp,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .offset(y = (-24).dp)
+            ) {
+                Column(modifier = Modifier.padding(24.dp)) {
+
+
+                    // Name + Price
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            meal.name,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "₹${(meal.price * (100 - meal.offer)) / 100}",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    // Location & delivery info
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Place, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text( "Lucknow • Free delivery", color = Color.Gray, fontSize = 13.sp)
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Stats: Time, Reviews, Rating
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFFF5F5F5),
+                        tonalElevation = 2.dp,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp, horizontal = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            InfoPill(icon = Icons.Default.AccessTime, label = "25 min", sub = "Delivery")
+                            VerticalDivider()
+                            InfoPill(icon = Icons.Default.People, label = "${meal.noofreviews}+", sub = "Reviews")
+                            VerticalDivider()
+                            InfoPill(icon = Icons.Default.Star, label = "${meal.rating}", sub = "Rating", iconTint = Color(0xFFFFC107))
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Description
+                    Text("Description", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = meal.description ?: "No description available.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
+
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Ingredients list parsing (if string)
+                    val mealComponents = meal.ingredients?.map {
+                        it.name to it.quantity
+                    } ?: listOf(
+                        "Beef Patty" to "2 pcs",
+                        "Cheddar Cheese" to "1 slice",
+                        "Lettuce" to "2 leaves",
+                        "Tomato" to "2 slices",
+                        "Onion" to "3 rings",
+                        "Sauce" to "1 tbsp",
+                        "Bun" to "1"
+                    )
+
+                    MealInfoTable(ingredients = mealComponents)
+
+                    // Quantity + Add to cart
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .background(Color(0xFFF5F5F5), shape = RoundedCornerShape(12.dp))
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Icon(Icons.Default.Remove, contentDescription = null, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("1", fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp))
+                        }
+
+                        Button(
+                            onClick = { /* Add to cart */ },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5722))
+                        ) {
+                            Text("Add to cart", color = Color.White)
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
+
 
 @Composable
 fun InfoPill(icon: ImageVector, label: String, sub: String, iconTint: Color = Color.Black) {
@@ -299,69 +466,6 @@ fun MealInfoTable(ingredients: List<Pair<String, String>>) {
             }
 
             Divider(color = Color.LightGray.copy(alpha = 0.2f))
-        }
-    }
-}
-@Composable
-fun QuantitySelector(
-    selectedQuantity: String,
-    onQuantitySelected: (String) -> Unit
-) {
-    val quantities = listOf(
-        "250 Gms" to "₹175",
-        "500 Gms" to "₹320",
-        "1 Kg" to "₹545"
-    )
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White) // Dark background like image
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Quantity",
-                style = MaterialTheme.typography.titleMedium.copy(color = Color.Black),
-            )
-            Text(
-                text = "Required • Select any 1 option",
-                style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray),
-                modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
-            )
-
-            quantities.forEach { (label, price) ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onQuantitySelected(label) }
-                        .padding(vertical = 1.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black)
-                    )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = price,
-                            style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black),
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        RadioButton(
-                            selected = selectedQuantity == label,
-                            onClick = { onQuantitySelected(label) },
-                            colors = RadioButtonDefaults.colors(
-                                selectedColor = Color(0xFF00C853),
-                                unselectedColor = Color.Gray
-                            )
-                        )
-                    }
-                }
-            }
         }
     }
 }
