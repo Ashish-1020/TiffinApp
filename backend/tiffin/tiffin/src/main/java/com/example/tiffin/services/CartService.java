@@ -32,8 +32,15 @@ public class CartService {
         List<CartItem> items = cartRepository.findByUser(user);
 
         return items.stream()
-                .map(item -> new CartItemDto(item.getMeal().getId(), item.getQuantity()))
+                .map(item -> new CartItemDto(
+                        item.getMeal().getId(),
+                        item.getQuantity(),
+                        item.getMeal().getName(),
+                        item.getMeal().getPrice(),
+                        item.getMeal().getOffer()
+                ))
                 .toList();
+
     }
 
     public void addOrUpdateCartItem(String email, String mealId, int quantity) {

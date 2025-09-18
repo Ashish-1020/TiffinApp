@@ -1,4 +1,5 @@
 package com.example.tiffinapp.core.presentation
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -42,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -65,15 +67,28 @@ fun LoginScreen(navController: NavController,viewModel: AuthViewModel = hiltView
     var passwordVisible by remember { mutableStateOf(false) }
     val uiState by viewModel.loginuiState.collectAsState()
     val colors = MaterialTheme.colorScheme
+    val context = LocalContext.current
 
     LaunchedEffect(uiState) {
-        if (uiState is LoginUiState.Success) {
-         //   delay(500) // Optional delay for showing message
-            navController.navigate("MainScreen") {
-                popUpTo("login") { inclusive = true }
+        when (uiState) {
+            is LoginUiState.Loading -> {
+                Toast.makeText(context, "Logging in...", Toast.LENGTH_SHORT).show()
             }
+
+            is LoginUiState.Error -> {
+                Toast.makeText(context, (uiState as LoginUiState.Error).message, Toast.LENGTH_SHORT).show()
+            }
+
+            is LoginUiState.Success -> {
+                navController.navigate("MainScreen") {
+                    popUpTo("login") { inclusive = true }
+                }
+            }
+
+            else -> {}
         }
     }
+
 
     Box(
         modifier = Modifier
@@ -124,12 +139,7 @@ fun LoginScreen(navController: NavController,viewModel: AuthViewModel = hiltView
             }
         }
 
-        when (uiState) {
-            is LoginUiState.Loading -> LoadingState("Logging in...")
-           // is LoginUiState.Success -> MessageState((uiState as LoginUiState.Success).message, colors.primary)
-            is LoginUiState.Error -> MessageState((uiState as LoginUiState.Error).message, Color.Red)
-            else -> {}
-        }
+
     }
 }
 @Composable
@@ -235,7 +245,7 @@ fun LoadingState(message: String) {
 @Composable
 fun MessageState(message: String, color: Color) {
     Box(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier.padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(text = message, color = color, fontSize = 18.sp)

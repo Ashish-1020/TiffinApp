@@ -1,5 +1,6 @@
 package com.example.tiffinapp.core.presentation
 
+import android.util.Log
 import com.example.tiffinapp.core.data.SignupRequest
 import com.example.tiffinapp.core.domain.AuthRepository
 
@@ -11,6 +12,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
+import java.io.IOException
 import javax.inject.Inject
 
 sealed class RegisterUiState {
@@ -69,26 +72,47 @@ class AuthViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                val response = repository.login(LoginRequest(email, password))
+                val response = repository.login(LoginRequest(email.trim(), password.trim()))
 
                 if (response.isSuccessful) {
-                    val loginResponse = response.body()
+                    val body = response.body()
 
-                    if (loginResponse != null && loginResponse.status) {
-                        tokenManager.saveToken(loginResponse.token) // Save JWT token
-                        tokenManager.saveUserId(loginResponse.id.toLong()) // Save User ID
-                        _loginuiState.value = LoginUiState.Success(loginResponse.username)
+                    if (body?.status == true && !body.token.isNullOrBlank()) {
+                        // Save token and user ID
+                        tokenManager.saveToken(body.token)
+                        tokenManager.saveUserId(body.id.toLong())
+
+                        _loginuiState.value = LoginUiState.Success(body.username)
                     } else {
-                        _loginuiState.value = LoginUiState.Error("Invalid credentials")
+                        _loginuiState.value = LoginUiState.Error(
+                            body?.message ?: "Invalid email or password"
+                        )
                     }
 
                 } else {
-                    _loginuiState.value = LoginUiState.Error("Login failed: ${response.code()}")
+                    // Handle specific HTTP errors if needed
+                    val message = when (response.code()) {
+                        401 -> "Unauthorized: Invalid credentials"
+                        403 -> "Access denied"
+                        500 -> "Server error. Please try again later."
+                        else -> "Login failed with code ${response.code()}"
+                    }
+                    _loginuiState.value = LoginUiState.Error(message)
                 }
+
             } catch (e: Exception) {
-                _loginuiState.value = LoginUiState.Error("Error: ${e.localizedMessage}")
+                val message = when (e) {
+                    is IOException -> "Network error. Check your internet connection."
+                    is HttpException -> "Unexpected server response. Please try again."
+                    else -> "Something went wrong. Please try again later."
+                }
+
+                // Log full error for debugging, but don't show it to users
+                Log.e("LoginViewModel", "Login error", e)
+                _loginuiState.value = LoginUiState.Error(message)
             }
         }
     }
+
 
 }

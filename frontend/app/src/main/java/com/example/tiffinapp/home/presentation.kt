@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalFoundationApi::class)
+@file:OptIn(ExperimentalFoundationApi::class) @file:JvmName("TiffinHomeScreenKt")
 
 package com.example.tiffinapp.ui.home
 

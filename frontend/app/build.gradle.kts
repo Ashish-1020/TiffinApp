@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt) // Hilt plugin alias
     kotlin("kapt")
+    kotlin("plugin.serialization") version "1.9.10"
 
 }
 
@@ -55,6 +56,8 @@ dependencies {
     implementation(libs.androidx.navigation.runtime.android)
     implementation(libs.androidx.foundation.android)
     implementation(libs.androidx.foundation.android)
+    implementation(libs.androidx.runtime.livedata)
+    implementation(libs.androidx.appcompat)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -78,12 +81,32 @@ dependencies {
 
     implementation("io.coil-kt:coil-compose:2.4.0")
 
+    implementation ("com.razorpay:checkout:1.6.40")
+
+    // Kotlinx Serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+
+    // If using Retrofit + Kotlinx Serialization Converter
+    implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:0.8.0")
 
 
 
+    // Krossbow STOMP with Ktor WebSocket (Android compatible)
+    implementation ("org.hildan.krossbow:krossbow-stomp-core:7.0.0")
+    implementation ("org.hildan.krossbow:krossbow-websocket-ktor:7.0.0")
+    implementation ("com.airbnb.android:lottie-compose:6.3.0")
+
+    // Google Play Services Location
+    implementation ("com.google.android.gms:play-services-location:21.0.1")
+
+
+
+
+
+    //material3 ui
     implementation("androidx.compose.material3.adaptive:adaptive:1.2.0-alpha07")
-        implementation ("androidx.compose.material3.adaptive:adaptive-layout:1.2.0-alpha07")
-        implementation ("androidx.compose.material3.adaptive:adaptive-navigation:1.2.0-alpha07")
+    implementation ("androidx.compose.material3.adaptive:adaptive-layout:1.2.0-alpha07")
+    implementation ("androidx.compose.material3.adaptive:adaptive-navigation:1.2.0-alpha07")
 
 
 

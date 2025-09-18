@@ -3,6 +3,7 @@ package com.example.tiffinapp.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tiffinapp.core.data.MealResponse
+import com.example.tiffinapp.core.domain.CartRepository
 import com.example.tiffinapp.core.domain.MealRepository
 import com.example.tiffinapp.core.presentation.RegisterUiState
 import com.example.tiffinapp.core.util.TokenManager
@@ -14,7 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val mealRepository: MealRepository,private val tokenManager: TokenManager
+    private val mealRepository: MealRepository,private val tokenManager: TokenManager,private  val cartRepository: CartRepository
 ) : ViewModel() {
 
     private val _mealList = MutableStateFlow<List<MealResponse>>(emptyList())
@@ -50,6 +51,20 @@ class HomeViewModel @Inject constructor(
                 // Handle/log error (optional)
                 e.printStackTrace()
             }
+        }
+    }
+
+    fun addToCart(mealId: String,quantity:Int) {
+
+        viewModelScope.launch {
+            try {
+                val token = tokenManager.getToken()
+                val response = token?.let { cartRepository.addToCart(it,mealId, quantity) }
+
+            }catch (e:Exception){
+                e.printStackTrace()
+            }
+
         }
     }
 

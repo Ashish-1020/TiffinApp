@@ -1,6 +1,9 @@
 package com.example.tiffinapp.home
 
+import android.Manifest
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
@@ -64,19 +67,31 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.outlined.ArrowDropDown
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
 
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.example.tiffinapp.cart.CartViewModel
 import com.example.tiffinapp.core.data.MealResponse
+import com.example.tiffinapp.core.util.LocationUtils
 import com.google.accompanist.pager.*
-import dev.chrisbanes.snapper.ExperimentalSnapperApi
 
+
+
+
+import dev.chrisbanes.snapper.ExperimentalSnapperApi
 @OptIn(
     ExperimentalMaterial3Api::class,
     ExperimentalPagerApi::class,
@@ -84,22 +99,50 @@ import dev.chrisbanes.snapper.ExperimentalSnapperApi
 )
 @Composable
 fun TiffinHomeScreen(navController: NavController) {
+    val context = LocalContext.current
+
+    var userAddress by remember { mutableStateOf("Fetching location...") }
+
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // ✅ Fetch location and store it
+            LocationUtils.fetchAndStoreLocation(context) { success ->
+                if (success) {
+                    userAddress = LocationUtils.getAddress(context) ?: "Address not found"
+                } else {
+                    userAddress = "Location not available"
+                }
+            }
+        } else {
+            userAddress = "Permission denied"
+        }
+    }
+
+
+
     val viewModel: HomeViewModel = hiltViewModel()
+    val cartViewModel: CartViewModel = hiltViewModel()
+
     val mealList by viewModel.mealList.collectAsState()
-    val cartItems = remember { mutableStateListOf<String>() }
+    val cartItems by cartViewModel.cartItems.observeAsState(emptyList())
+    val cartItemIds = remember(cartItems) { cartItems.map { it.mealId }.toSet() }
+
     val favoriteItems = remember { mutableStateListOf<String>() }
     var selectedCategory by remember { mutableStateOf("All") }
-
-
     var searchQuery by remember { mutableStateOf("") }
-    var filteredMeals = mealList.filter { it.name.contains(searchQuery, ignoreCase = true) }
-    filteredMeals = mealList.filter {
+
+    var filteredMeals = mealList.filter {
         (selectedCategory == "All" || it.name.contains(selectedCategory, ignoreCase = true)) &&
                 it.name.contains(searchQuery, ignoreCase = true)
     }
 
     LaunchedEffect(Unit) {
+        permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         viewModel.getAllMeal()
+        cartViewModel.fetchCart() // 👈 Fetch cart once on screen load
     }
 
     val pagerState = rememberPagerState(initialPage = 0)
@@ -125,11 +168,35 @@ fun TiffinHomeScreen(navController: NavController) {
                             tint = Color.Red
                         )
                         Spacer(modifier = Modifier.width(4.dp))
+                        Column {
                         Text(
-                            text = "Lucknow",
+                            text = "Location",
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp
                         )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                val shortAddress = userAddress
+                                    .split(",")
+                                    .take(3)
+                                    .joinToString(",")
+                                    .take(25)
+
+                                Text(
+                                    text = shortAddress,
+                                    fontSize = 14.sp,
+                                    color = Color.Gray,
+                                    maxLines = 1
+                                )
+
+
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = Icons.Default.KeyboardArrowDown,
+                                    contentDescription = "Profile",
+                                    tint = Color(0xFFFF9800) // Orange
+                                )
+                            }
+                        }
                     }
 
                     IconButton(onClick = { /* Navigate to Profile */ }) {
@@ -187,18 +254,15 @@ fun TiffinHomeScreen(navController: NavController) {
                 .background(Color.White)
         ) {
             item {
-                HeaderSection()
+              //  HeaderSection()
+                Spacer(modifier = Modifier.height(24.dp))
                 OfferCarousel()
                 Spacer(modifier = Modifier.height(12.dp))
-
-               // Text("Popular Meals", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-              //  Spacer(modifier = Modifier.height(12.dp))
 
                 FoodCategorySection { category ->
                     selectedCategory = category
                     Log.d("SelectedCategory", category)
                 }
-
 
                 Spacer(modifier = Modifier.height(24.dp))
                 Text("Recommended Meals", fontWeight = FontWeight.Bold, fontSize = 20.sp)
@@ -215,20 +279,21 @@ fun TiffinHomeScreen(navController: NavController) {
                 ) {
                     items(filteredMeals) { meal ->
                         FoodItemCard(
+                            viewModel = viewModel,
                             meal = meal,
-                            isInCart = cartItems.contains(meal.id),
+                            isInCart = cartItemIds.contains(meal.id), // ✅ From LiveData
                             isFavorite = favoriteItems.contains(meal.id),
                             onAddToCart = {
-                                if (!cartItems.contains(it.id)) cartItems.add(it.id)
+                                cartViewModel.addItem(meal.id, 1) // ✅ Call ViewModel function
                             },
                             onFavorite = {
-                                if (favoriteItems.contains(it.id)) {
-                                    favoriteItems.remove(it.id)
+                                if (favoriteItems.contains(meal.id)) {
+                                    favoriteItems.remove(meal.id)
                                 } else {
-                                    favoriteItems.add(it.id)
+                                    favoriteItems.add(meal.id)
                                 }
                             },
-                            navController=navController
+                            navController = navController
                         )
                     }
                 }
@@ -240,11 +305,31 @@ fun TiffinHomeScreen(navController: NavController) {
 }
 
 
+
 @OptIn(ExperimentalPagerApi::class, ExperimentalSnapperApi::class)
 @Composable
 fun OfferCarousel() {
-    val pagerCount = 3
+    val offers = listOf(
+        Offer(
+            title = "Weekend Special 🍕",
+            description = "Use code WEEKEND20 for 20% OFF",
+            color = Color(0xFFFF5722) // Orange
+        ),
+        Offer(
+            title = "Healthy Choice 🥗",
+            description = "Save ₹100 with code HEALTH100",
+            color = Color(0xFF4CAF50) // Green
+        ),
+        Offer(
+            title = "First Order Bonus 🎉",
+            description = "Flat 30% OFF • Code: FIRST30",
+            color = Color(0xFF3F51B5) // Indigo
+        )
+    )
+
+    val pagerCount = offers.size
     val pagerState = rememberPagerState(initialPage = 0)
+
     val coroutineScope = rememberCoroutineScope()
     val progress = remember { Animatable(0f) }
 
@@ -265,7 +350,6 @@ fun OfferCarousel() {
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Spacer(modifier = Modifier.height(8.dp))
-
         HorizontalPager(
             count = pagerCount,
             state = pagerState,
@@ -280,48 +364,22 @@ fun OfferCarousel() {
                 .fillMaxWidth()
                 .height(200.dp)
         ) { page ->
+            val offer = offers[page]
             OfferCard(
-                title = "Special Offer ${page + 1}",
-                description = "Use code TIFFIN${50 + page * 10} to save big!",
-                color = when (page) {
-                    0 -> Color(0xFFFF5722)
-                    1 -> Color(0xFF4CAF50)
-                    else -> Color(0xFF3F51B5)
-                },
+                title = offer.title,
+                description = offer.description,
+                color = offer.color,
                 progress = progress.value
             )
         }
 
 
 
+
     }
 }
 
 
-@Composable
-fun HeaderSection() {
-    Column(modifier = Modifier.padding(16.dp)) {
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = buildAnnotatedString {
-                withStyle(style = SpanStyle(color = Color.Gray)) { append("A ") }
-                withStyle(style = SpanStyle(color = Color(0xFFFF9800), fontWeight = FontWeight.Bold)) { append("special dish ") }
-                withStyle(style = SpanStyle(color = Color.Black, fontWeight = FontWeight.Bold)) { append("prepared for you") }
-            },
-            fontSize = 22.sp,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-        )
-
-        Text(
-            text = "Our food delivery app brings your favourite dishes to you.",
-            fontSize = 14.sp,
-            color = Color.Gray,
-            modifier = Modifier.padding(top = 4.dp).align(Alignment.CenterHorizontally)
-        )
-    }
-}
 
 @Composable
 fun FoodCategorySection(
@@ -460,6 +518,7 @@ fun OfferCard(
 
 @Composable
 fun FoodItemCard(
+    viewModel: HomeViewModel,
     meal: MealResponse,
     isInCart: Boolean,
     isFavorite: Boolean,
@@ -649,4 +708,11 @@ fun FoodCard(title: String, price: String, rating: Double, color: Color) {
         }
     }
 }
+
+data class Offer(
+    val title: String,
+    val description: String,
+    val color: Color
+)
+
 
