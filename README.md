@@ -15,7 +15,7 @@ https://github.com/user-attachments/assets/181a7740-e032-4e7b-a06a-609d5244a328
 
 ---
 
-## 🚀 Overview  
+## Overview  
 Tiffin is a **full-stack food ordering and delivery application** designed to provide a seamless experience for users, delivery partners, and restaurant admins.  
 It offers:  
 - **JWT-secured REST APIs** for secure login.  
@@ -25,31 +25,31 @@ It offers:
 
 ---
 
-## ✨ Key Features  
+##  Key Features  
 
-### 🔒 Security  
+###  Security  
 - JWT-secured authentication & role-based authorization.  
 
-### 📡 Real-Time Tracking  
+###  Real-Time Tracking  
 - WebSocket-powered live delivery updates (80% latency reduction).  
 
-### 💳 Wallet System  
+###  Wallet System  
 - Razorpay payment gateway integration.  
 - PostgreSQL-backed wallet with **credit, debit, cashback & refund support**.  
 
-### 🛠 Clean Architecture  
+###  Clean Architecture  
 - MVVM pattern with **Hilt DI**.  
 - Reduced boilerplate → 30% smaller codebase.  
 
 ---
 
-## ⚙️ Transaction Concurrency Handling  
+##  Transaction Concurrency Handling  
 
 Ensuring **atomic and consistent wallet transactions** was a key challenge.  
 
-✔️ **Transactional Endpoints** → every operation wrapped with `@Transactional` for ACID compliance.  
-✔️ **Idempotency** → each request has a unique `transactionId` to avoid duplicates.  
-✔️ **Wallet Ledger** → full audit trail of all credits, debits, and refunds.  
+**Transactional Endpoints** → every operation wrapped with `@Transactional` for ACID compliance.  
+**Idempotency** → each request has a unique `transactionId` to avoid duplicates.  
+**Wallet Ledger** → full audit trail of all credits, debits, and refunds.  
  
 
 
